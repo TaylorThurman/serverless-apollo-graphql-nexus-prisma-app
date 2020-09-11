@@ -1,0 +1,110 @@
+generator prisma_client {
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "rhel-openssl-1.0.x"]
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model Callback {
+  id                   Int           @default(autoincrement()) @id
+  conversation         String?
+  nextInterviewOutlook String?
+  redFlags             String?
+  submissionId         Int
+  callbackDate         DateTime?
+  submission           Submission    @relation(fields: [submissionId], references: [id])
+  recordings           Recording[]
+  interviewers         Interviewer[]
+  spiels               Spiel[]
+
+  @@index([submissionId], name: "submissionId")
+}
+
+model Interview {
+  id                      Int           @default(autoincrement()) @id
+  additionalInfo          String?
+  complexityDescription   String?
+  complexityLevel         Int?
+  interviewPrep           String?
+  jobReqExceptions        String?
+  nextSteps               String?
+  overallInterviewSuccess String?
+  rNdItems                String?
+  responsibilities        String?
+  role                    String?
+  submissionId            Int
+  interviewDate           DateTime?
+  submission              Submission    @relation(fields: [submissionId], references: [id])
+  recordings              Recording[]
+  interviewers            Interviewer[]
+  spiels                  Spiel[]
+  unsupportedTech         Tech[]
+
+  @@index([submissionId], name: "submissionId")
+}
+
+model Interviewer {
+  id          Int          @default(autoincrement()) @id
+  archived    Boolean
+  bu          String
+  name        String
+  callback    Callback[]
+  interviews  Interview[]
+  submissions Submission[]
+}
+
+model Recording {
+  id          Int        @default(autoincrement()) @id
+  createdAt   DateTime?
+  encoding    String?
+  filename    String?
+  mimetype    String?
+  updateAt    DateTime?
+  url         String?    @unique
+  callbackId  Int?
+  interviewId Int?
+  callback    Callback?  @relation(fields: [callbackId], references: [id])
+  interview   Interview? @relation(fields: [interviewId], references: [id])
+
+  @@index([callbackId], name: "callbackId")
+  @@index([interviewId], name: "interviewId")
+}
+
+model Spiel {
+  id         Int         @default(autoincrement()) @id
+  archived   Boolean
+  bu         String
+  name       String?
+  callbacks  Callback[]
+  interviews Interview[]
+}
+
+model Submission {
+  id                 Int           @default(autoincrement()) @id
+  archived           Boolean
+  assignedToEngineer String?
+  crmEngineerCrmId   String?
+  endClient          String?
+  engineerName       String?
+  bu                 String
+  passThroughClient  String?
+  submissionDate     DateTime?
+  callbacks          Callback[]
+  interviews         Interview[]
+  interviewers       Interviewer[]
+  techList           Tech[]
+}
+
+model Tech {
+  id          Int          @default(autoincrement()) @id
+  archived    Boolean
+  bu          String
+  name        String
+  interviews  Interview[]
+  submissions Submission[]
+
+  @@unique([bu, name], name: "bu_name_constraint")
+}

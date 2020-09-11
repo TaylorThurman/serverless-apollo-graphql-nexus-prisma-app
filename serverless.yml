@@ -1,0 +1,49 @@
+service: call-logger-graphql-api
+
+provider:
+  name: aws
+  runtime: nodejs12.x
+  stage: ${env:STAGE}
+  profile: ${env:PROFILE}
+  region: us-west-2
+  vpc:
+    securityGroupIds:
+      - ${env:VPC_SECURITY_GROUP_ID}
+    subnetIds:
+      - ${env:VPC_SUBNET_ID}
+
+functions:
+  graphql:
+    handler: src/graphql.graphqlHandler
+    environment:
+      SLS_DEBUG: true
+    events:
+      - http:
+          path: graphql
+          method: post
+          cors: true
+          integration: lambda-proxy
+      - http:
+          path: graphql
+          method: get
+          cors: true
+          integration: lambda-proxy
+
+plugins:
+  - serverless-offline
+  - serverless-plugin-include-dependencies
+  - serverless-webpack
+  - serverless-dotenv-plugin
+
+custom:
+  serverless-offline:
+    allowCache: true
+  webpack:
+    webpackConfig: ./webpack.config.js
+    includeModules: true
+    packagerOptions:
+      scripts: # this is the magic
+        - prisma generate
+
+package:
+  excludeDevDependencies: false
